@@ -1,0 +1,39 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "NodeNext", // Required to enforce ESM import rules
+		"moduleResolution": "NodeNext", // Ensures TS looks for extensions
+		"lib": ["ESNext"],
+
+		"paths": {
+			"@sdk": ["../../sdk/index.d.ts"]
+		},
+
+		"outDir": "dist",
+		"rootDir": "src",
+		"sourceMap": true,
+		"removeComments": true,
+
+		"types": ["node"],
+
+		"strict": true,
+		"noImplicitAny": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictBindCallApply": true,
+		"strictPropertyInitialization": true,
+		"noImplicitThis": true,
+		"useUnknownInCatchVariables": true,
+		"alwaysStrict": true,
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true, // Forces handling of undefined when accessing arrays by index
+		"forceConsistentCasingInFileNames": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"]
+}

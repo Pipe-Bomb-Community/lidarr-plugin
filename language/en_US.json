@@ -1,0 +1,4 @@
+{
+	"plugin.lidarr.name": "Lidarr",
+	"task.plugin.lidarr.sync.name": "Sync Lidarr"
+}
