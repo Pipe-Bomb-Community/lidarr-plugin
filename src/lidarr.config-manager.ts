@@ -7,6 +7,9 @@ export class LidarrConfigManager implements ConfigManager {
 	private url: string | null = null;
 	private apiKey: string | null = null;
 	private publicUrl: string | null = null;
+	private rootFolderPath: string | null = null;
+	private qualityProfileName: string | null = null;
+	private metadataProfileName: string | null = null;
 
 	private sdk: typeof SDK | null = null;
 
@@ -15,6 +18,21 @@ export class LidarrConfigManager implements ConfigManager {
 
 		this.url = await this.api.getValue("url", "string", false);
 		this.publicUrl = await this.api.getValue("publicurl", "string", false);
+		this.rootFolderPath = await this.api.getValue(
+			"rootfolder",
+			"string",
+			false,
+		);
+		this.qualityProfileName = await this.api.getValue(
+			"qualityprofile",
+			"string",
+			false,
+		);
+		this.metadataProfileName = await this.api.getValue(
+			"metadataprofile",
+			"string",
+			false,
+		);
 		this.apiKey = await this.api.getValue("apikey", "string", false);
 		this.updateSdk();
 	}
@@ -43,6 +61,18 @@ export class LidarrConfigManager implements ConfigManager {
 
 	getPublicUrl() {
 		return this.publicUrl;
+	}
+
+	getRootFolderPath() {
+		return this.rootFolderPath;
+	}
+
+	getQualityProfileName() {
+		return this.qualityProfileName;
+	}
+
+	getMetadataProfileName() {
+		return this.metadataProfileName;
 	}
 
 	async getConfigOptions(): Promise<ConfigNode> {
@@ -79,6 +109,37 @@ export class LidarrConfigManager implements ConfigManager {
 						{
 							type: "heading",
 							size: "md",
+							content: "Library",
+						},
+						{
+							type: "text",
+							id: "rootFolderPath",
+							placeholder: "/media/Music",
+							value: this.rootFolderPath ?? "",
+							name: "Root Folder Path",
+						},
+						{
+							type: "text",
+							id: "qualityProfileName",
+							placeholder: "Lossless",
+							value: this.qualityProfileName ?? "",
+							name: "Quality Profile name",
+						},
+						{
+							type: "text",
+							id: "metadataProfileName",
+							placeholder: "Standard",
+							value: this.metadataProfileName ?? "",
+							name: "Metadata Profile name",
+						},
+					],
+				},
+				{
+					type: "section",
+					children: [
+						{
+							type: "heading",
+							size: "md",
 							content: "Web",
 						},
 						{
@@ -95,7 +156,15 @@ export class LidarrConfigManager implements ConfigManager {
 	}
 
 	async update(values: Record<string, any>): Promise<ConfigNode> {
-		const { url, publicUrl, apiKey } = values;
+		const {
+			url,
+			publicUrl,
+			apiKey,
+			rootFolderPath,
+			qualityProfileName,
+			metadataProfileName,
+			tagName,
+		} = values;
 
 		if (typeof url == "string") {
 			if (url.trim()) {
@@ -126,6 +195,41 @@ export class LidarrConfigManager implements ConfigManager {
 				await this.api.delete("apikey");
 			}
 		}
+
+		if (typeof rootFolderPath == "string") {
+			if (rootFolderPath.trim()) {
+				this.rootFolderPath = rootFolderPath;
+				await this.api.setValue("rootfolder", "string", rootFolderPath);
+			} else {
+				this.rootFolderPath = null;
+				await this.api.delete("rootfolder");
+			}
+		}
+
+		if (typeof qualityProfileName == "string") {
+			if (qualityProfileName.trim()) {
+				this.qualityProfileName = qualityProfileName;
+				await this.api.setValue("qualityprofile", "string", qualityProfileName);
+			} else {
+				this.qualityProfileName = null;
+				await this.api.delete("qualityprofile");
+			}
+		}
+
+		if (typeof metadataProfileName == "string") {
+			if (metadataProfileName.trim()) {
+				this.metadataProfileName = metadataProfileName;
+				await this.api.setValue(
+					"metadataprofile",
+					"string",
+					metadataProfileName,
+				);
+			} else {
+				this.metadataProfileName = null;
+				await this.api.delete("metadataprofile");
+			}
+		}
+
 		this.updateSdk();
 
 		return this.getConfigOptions();
