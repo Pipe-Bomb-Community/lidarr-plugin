@@ -88,9 +88,14 @@ export class Trawler {
 				onProgress(0);
 			}
 
-			const identities = await this.dataClient.getAlbumIdentities(albumUuid);
-			if (identities) {
-				const releaseGroups = identities.filter(
+			const album = await this.dataClient.getAlbum(albumUuid, {
+				relations: {
+					identities: true,
+				},
+			});
+
+			if (album?.identities) {
+				const releaseGroups = album.identities.filter(
 					(identity) => identity.identityId == "musicbrainz_release_group_id",
 				);
 				for (const releaseGroupIdentity of releaseGroups) {
