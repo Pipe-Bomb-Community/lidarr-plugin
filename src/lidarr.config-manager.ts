@@ -10,6 +10,8 @@ export class LidarrConfigManager implements ConfigManager {
 	private rootFolderPath: string | null = null;
 	private qualityProfileName: string | null = null;
 	private metadataProfileName: string | null = null;
+	private webhookPort: number | null = null;
+	private readonly webhookPortListeners = new Set<() => void>();
 
 	private sdk: typeof SDK | null = null;
 
@@ -34,6 +36,10 @@ export class LidarrConfigManager implements ConfigManager {
 			false,
 		);
 		this.apiKey = await this.api.getValue("apikey", "string", false);
+		this.webhookPort = await this.api.getValue("webhookPort", "integer");
+		for (const listener of this.webhookPortListeners) {
+			listener();
+		}
 		this.updateSdk();
 	}
 
@@ -73,6 +79,10 @@ export class LidarrConfigManager implements ConfigManager {
 
 	getMetadataProfileName() {
 		return this.metadataProfileName;
+	}
+
+	getWebhookPort() {
+		return this.webhookPort;
 	}
 
 	async getConfigOptions(): Promise<ConfigNode> {
@@ -151,6 +161,23 @@ export class LidarrConfigManager implements ConfigManager {
 						},
 					],
 				},
+				{
+					type: "section",
+					children: [
+						{
+							type: "heading",
+							size: "md",
+							content: "Library Updates",
+						},
+						{
+							type: "text",
+							id: "webhookPort",
+							placeholder: "61172",
+							value: this.webhookPort?.toString() ?? "",
+							name: "Webhook target port",
+						},
+					],
+				},
 			],
 		};
 	}
@@ -163,7 +190,7 @@ export class LidarrConfigManager implements ConfigManager {
 			rootFolderPath,
 			qualityProfileName,
 			metadataProfileName,
-			tagName,
+			webhookPort,
 		} = values;
 
 		if (typeof url == "string") {
@@ -230,8 +257,32 @@ export class LidarrConfigManager implements ConfigManager {
 			}
 		}
 
+		if (typeof webhookPort == "string") {
+			if (webhookPort.trim()) {
+				const port = Number(webhookPort);
+				if (Number.isInteger(port) && port > 0) {
+					this.webhookPort = port;
+					await this.api.setValue("webhookPort", "integer", port);
+					for (const listener of this.webhookPortListeners) {
+						listener();
+					}
+				}
+			} else {
+				this.webhookPort = null;
+				await this.api.delete("webhookPort");
+				for (const listener of this.webhookPortListeners) {
+					listener();
+				}
+			}
+		}
+
 		this.updateSdk();
 
 		return this.getConfigOptions();
+	}
+
+	addWebhookPortListener(listener: () => void) {
+		this.webhookPortListeners.add(listener);
+		return () => this.webhookPortListeners.delete(listener);
 	}
 }

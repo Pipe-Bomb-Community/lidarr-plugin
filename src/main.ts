@@ -2,6 +2,8 @@ import type PipeBomb from "@sdk";
 import { Trawler } from "./trawler.js";
 import { LidarrConfigManager } from "./lidarr.config-manager.js";
 import { LidarrExternalUrlSource } from "./lidarr.external-url-soure.js";
+import { WebhookServer } from "./webhook-server.js";
+import type LocalLibraryPlugin from "local-library/src/main.js";
 
 export default class Plugin implements PipeBomb.Plugin {
 	private api!: PipeBomb.PluginApiContext;
@@ -26,6 +28,24 @@ export default class Plugin implements PipeBomb.Plugin {
 			resumable: false,
 			run: async (ctx) => trawler.sync((percent) => ctx.update(percent)),
 		});
+
+		let webhookServer: WebhookServer | null = null;
+		const createWebhookServer = () => {
+			webhookServer?.destroy();
+
+			const port = config.getWebhookPort();
+			if (port) {
+				webhookServer = new WebhookServer(port, config, this.logger, () =>
+					this.api
+						.getPlugin<LocalLibraryPlugin>("local-library")
+						.then((plugin) => plugin?.getLibrary() ?? null),
+				);
+			} else {
+				webhookServer = null;
+			}
+		};
+		createWebhookServer();
+		config.addWebhookPortListener(() => createWebhookServer());
 	}
 
 	disable() {}
