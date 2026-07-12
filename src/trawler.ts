@@ -83,7 +83,7 @@ export class Trawler {
 		const total = await this.dataClient.getAlbumCount();
 
 		let index = 0;
-		await this.dataClient.forEachAlbum(async (albumUuid) => {
+		await this.dataClient.forEachAlbumId(async (albumUuid) => {
 			if (!index++) {
 				onProgress(0);
 			}
