@@ -4,6 +4,7 @@ import { LidarrConfigManager } from "./lidarr.config-manager.js";
 import { LidarrExternalUrlSource } from "./lidarr.external-url-soure.js";
 import { WebhookServer } from "./webhook-server.js";
 import type LocalLibraryPlugin from "local-library/src/main.js";
+import { PauseImportsStep } from "./step/pause-imports.step.js";
 
 export default class Plugin implements PipeBomb.Plugin {
 	private api!: PipeBomb.PluginApiContext;
@@ -22,6 +23,7 @@ export default class Plugin implements PipeBomb.Plugin {
 		const trawler = new Trawler(this.api.getDataClient(), config, this.logger);
 
 		this.api.registerExternalUrlSource(new LidarrExternalUrlSource(config));
+		const workflowClient = this.api.getWorkflowClient();
 
 		this.api.registerTask({
 			id: "sync",
@@ -29,16 +31,24 @@ export default class Plugin implements PipeBomb.Plugin {
 			run: async (ctx) => trawler.sync((percent) => ctx.update(percent)),
 		});
 
+		const pauseImportsStep = new PauseImportsStep();
+		workflowClient.registerStep(pauseImportsStep.getStep());
+
 		let webhookServer: WebhookServer | null = null;
 		const createWebhookServer = () => {
 			webhookServer?.destroy();
 
 			const port = config.getWebhookPort();
 			if (port) {
-				webhookServer = new WebhookServer(port, config, this.logger, () =>
-					this.api
-						.getPlugin<LocalLibraryPlugin>("local-library")
-						.then((plugin) => plugin?.getLibrary() ?? null),
+				webhookServer = new WebhookServer(
+					port,
+					config,
+					this.logger,
+					pauseImportsStep,
+					() =>
+						this.api
+							.getPlugin<LocalLibraryPlugin>("local-library")
+							.then((plugin) => plugin?.getLibrary() ?? null),
 				);
 			} else {
 				webhookServer = null;

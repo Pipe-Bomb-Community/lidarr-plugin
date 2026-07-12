@@ -1,4 +1,6 @@
 {
 	"plugin.lidarr.name": "Lidarr",
-	"task.plugin.lidarr.sync.name": "Sync Lidarr"
+	"task.plugin.lidarr.sync.name": "Sync Lidarr",
+	"workflow.plugin.lidarr.step.pause-imports.name": "Pause new imports",
+	"workflow.plugin.lidarr.step.pause-imports.option.paused.name": "Paused"
 }

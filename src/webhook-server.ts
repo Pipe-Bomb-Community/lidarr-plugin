@@ -3,33 +3,24 @@ import * as HTTP from "http";
 import { LidarrWebhookPayload } from "./lidarr.js";
 import { LidarrConfigManager } from "./lidarr.config-manager.js";
 import { LocalLibrary } from "local-library/src/local.library-handler.js";
+import { PauseImportsStep } from "./step/pause-imports.step.js";
 
-interface WebhookAlbum {
-	id: number;
-	title: string;
-}
-
-interface WebhookEvent {
-	artist: {
-		id: number;
-		name: string;
-		path: string;
-		mbId: string;
-		tags: string[];
-	};
-	albums: WebhookAlbum[];
-	eventType: string;
-	instanceName: string;
-	applicationUrl: string;
+interface NewPathEntry {
+	library: LocalLibrary;
+	path: string;
 }
 
 export class WebhookServer {
 	private readonly app: HTTP.Server;
+	private pendingImports = new Set<NewPathEntry>();
+	private isImporting = false;
+	private rerunImport = false;
 
 	constructor(
 		port: number,
 		config: LidarrConfigManager,
-		logger: Logger,
+		private readonly logger: Logger,
+		private readonly pauseImportsStep: PauseImportsStep,
 		getLocalLibrary: () => Promise<LocalLibrary | null>,
 	) {
 		this.app = HTTP.createServer((req, res) => {
@@ -49,13 +40,6 @@ export class WebhookServer {
 
 			req.on("end", async () => {
 				try {
-					console.log(
-						{
-							method: req.method,
-							url: req.url,
-						},
-						body,
-					);
 					const event: LidarrWebhookPayload = JSON.parse(body);
 					const lidarrRootFolder = config.getRootFolderPath();
 					if (!lidarrRootFolder) {
@@ -79,7 +63,6 @@ export class WebhookServer {
 								lidarrRootFolder.length,
 							);
 							filePaths.push(filePath);
-							console.log(trackFile, filePath);
 						}
 
 						const library = await getLocalLibrary();
@@ -91,18 +74,14 @@ export class WebhookServer {
 							return;
 						}
 
-						logger.log(`Importing ${filePaths.length} new tracks:`);
-						for (const filePath of filePaths) {
-							logger.log(`- ${filePath}`);
+						for (const path of filePaths) {
+							this.pendingImports.add({
+								library,
+								path,
+							});
 						}
 
-						for (const filePath of filePaths) {
-							try {
-								await library.scanTrackPath(filePath);
-							} catch (e) {
-								logger.error(`Failed to import track "${filePath}"`, e);
-							}
-						}
+						await this.import();
 					}
 
 					res.end();
@@ -117,9 +96,82 @@ export class WebhookServer {
 		this.app.listen(port, () => {
 			logger.debug(`Started webhook server on port ${port}`);
 		});
+
+		this.pauseImportsStep.addListener(() => {
+			if (!this.pauseImportsStep.isPaused()) {
+				this.import();
+			}
+		});
 	}
 
 	destroy() {
 		this.app.close();
+	}
+
+	private async import() {
+		if (this.isImporting) {
+			this.logger.warn(
+				"Cannot start import because other tracks are already importing",
+			);
+			return;
+		}
+
+		if (this.pauseImportsStep.isPaused()) {
+			this.logger.debug("Delaying imports because new imports are paused");
+			return;
+		}
+
+		this.isImporting = true;
+		this.rerunImport = false;
+		const map = new Map<LocalLibrary, Set<string>>();
+
+		for (const entry of this.pendingImports) {
+			const set = map.get(entry.library);
+			if (set) {
+				set.add(entry.path);
+			} else {
+				map.set(entry.library, new Set([entry.path]));
+			}
+		}
+
+		this.pendingImports.clear();
+
+		for (const [library, paths] of map) {
+			this.logger.log(
+				`Importing ${paths.size} new tracks into Library "${library.id}":`,
+			);
+			for (const path of paths) {
+				this.logger.log(`- ${path}`);
+			}
+
+			for (const path of paths) {
+				if (this.pauseImportsStep.isPaused()) {
+					this.logger.log("Import interrupted because imports were paused");
+
+					for (const [library, paths] of map) {
+						for (const path of paths) {
+							this.pendingImports.add({ library, path });
+						}
+					}
+					return;
+				}
+
+				try {
+					await library.scanTrackPath(path);
+				} catch (e) {
+					this.logger.error(`Failed to import track "${path}"`, e);
+				}
+				paths.delete(path);
+			}
+		}
+
+		if (this.rerunImport && !this.pauseImportsStep.isPaused()) {
+			setImmediate(() => {
+				this.isImporting = false;
+				this.import();
+			});
+		} else {
+			this.isImporting = false;
+		}
 	}
 }
