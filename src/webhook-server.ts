@@ -15,6 +15,7 @@ export class WebhookServer {
 	private pendingImports = new Set<NewPathEntry>();
 	private isImporting = false;
 	private rerunImport = false;
+	private pauseImportsListener: () => void;
 
 	constructor(
 		port: number,
@@ -97,7 +98,7 @@ export class WebhookServer {
 			logger.debug(`Started webhook server on port ${port}`);
 		});
 
-		this.pauseImportsStep.addListener(() => {
+		this.pauseImportsListener = this.pauseImportsStep.addListener(() => {
 			if (!this.pauseImportsStep.isPaused()) {
 				this.import();
 			}
@@ -106,6 +107,7 @@ export class WebhookServer {
 
 	destroy() {
 		this.app.close();
+		this.pauseImportsListener();
 	}
 
 	private async import() {
@@ -153,6 +155,8 @@ export class WebhookServer {
 							this.pendingImports.add({ library, path });
 						}
 					}
+
+					this.isImporting = false;
 					return;
 				}
 
