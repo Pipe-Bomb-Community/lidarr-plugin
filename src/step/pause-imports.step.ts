@@ -1,4 +1,4 @@
-import { WorkflowStep } from "@sdk";
+import { WorkflowStep } from "@pipe-bomb/plugin-sdk";
 
 export class PauseImportsStep {
 	private paused = false;

@@ -4,7 +4,7 @@ import {
 	ExternalUrl,
 	ExternalUrlSource,
 	TrackExternalUrlHelper,
-} from "@sdk";
+} from "@pipe-bomb/plugin-sdk";
 import { LidarrConfigManager } from "./lidarr.config-manager.js";
 
 export class LidarrExternalUrlSource implements ExternalUrlSource {

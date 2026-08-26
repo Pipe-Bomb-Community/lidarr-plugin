@@ -5,10 +5,6 @@
 		"moduleResolution": "NodeNext", // Ensures TS looks for extensions
 		"lib": ["ESNext"],
 
-		"paths": {
-			"@sdk": ["../../sdk/index.d.ts"]
-		},
-
 		"outDir": "dist",
 		"rootDir": "src",
 		"sourceMap": true,

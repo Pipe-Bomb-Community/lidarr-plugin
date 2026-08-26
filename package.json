@@ -18,6 +18,7 @@
 		"node": "24.14.1"
 	},
 	"dependencies": {
+		"@pipe-bomb/plugin-sdk": "^0.0.2",
 		"axios": "^1.15.2",
 		"lidarr": "^1.0.0"
 	}

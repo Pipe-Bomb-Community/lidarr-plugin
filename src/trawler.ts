@@ -1,4 +1,4 @@
-import { DataClient, Logger } from "@sdk";
+import { DataClient, Logger } from "@pipe-bomb/plugin-sdk";
 import { LidarrConfigManager } from "./lidarr.config-manager.js";
 import { AlbumResource, ArtistResource } from "lidarr";
 

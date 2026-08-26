@@ -1,4 +1,4 @@
-import { Logger } from "@sdk";
+import { Logger } from "@pipe-bomb/plugin-sdk";
 import * as HTTP from "http";
 import { LidarrWebhookPayload } from "./lidarr.js";
 import { LidarrConfigManager } from "./lidarr.config-manager.js";

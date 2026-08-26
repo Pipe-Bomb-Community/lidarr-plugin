@@ -1,4 +1,4 @@
-import type PipeBomb from "@sdk";
+import type PipeBomb from "@pipe-bomb/plugin-sdk";
 import { Trawler } from "./trawler.js";
 import { LidarrConfigManager } from "./lidarr.config-manager.js";
 import { LidarrExternalUrlSource } from "./lidarr.external-url-soure.js";
