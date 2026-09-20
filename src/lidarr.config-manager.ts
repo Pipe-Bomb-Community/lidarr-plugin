@@ -1,4 +1,8 @@
-import { ConfigManager, ConfigManagerApiContext, ConfigNode } from "@pipe-bomb/plugin-sdk";
+import {
+	ConfigManager,
+	ConfigManagerApiContext,
+	ConfigNode,
+} from "@pipe-bomb/plugin-sdk";
 import { createClient, createConfig, createSdk, SDK } from "lidarr";
 
 export class LidarrConfigManager implements ConfigManager {

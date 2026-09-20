@@ -45,10 +45,21 @@ export default class Plugin implements PipeBomb.Plugin {
 					config,
 					this.logger,
 					pauseImportsStep,
-					() =>
-						this.api
-							.getPlugin<LocalLibraryPlugin>("local-library")
-							.then((plugin) => plugin?.getLibrary() ?? null),
+					async () => {
+						const path = config.getRootFolderPath();
+						if (path) {
+							const plugin =
+								await this.api.getPlugin<LocalLibraryPlugin>("local-library");
+							const library = plugin
+								?.getLibraries()
+								?.find((lib) => lib.getPath() === path);
+							if (library) {
+								return library;
+							}
+						}
+
+						return null;
+					},
 				);
 			} else {
 				webhookServer = null;
