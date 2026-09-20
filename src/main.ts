@@ -46,13 +46,14 @@ export default class Plugin implements PipeBomb.Plugin {
 					this.logger,
 					pauseImportsStep,
 					async () => {
-						const path = config.getRootFolderPath();
-						if (path) {
+						const libraryId = config.getLibraryId();
+						if (libraryId) {
 							const plugin =
 								await this.api.getPlugin<LocalLibraryPlugin>("local-library");
 							const library = plugin
 								?.getLibraries()
-								?.find((lib) => lib.getPath() === path);
+								?.find((lib) => lib.id === libraryId);
+
 							if (library) {
 								return library;
 							}

@@ -12,6 +12,7 @@ export class LidarrConfigManager implements ConfigManager {
 	private apiKey: string | null = null;
 	private publicUrl: string | null = null;
 	private rootFolderPath: string | null = null;
+	private libraryId: string | null = null;
 	private qualityProfileName: string | null = null;
 	private metadataProfileName: string | null = null;
 	private webhookPort: number | null = null;
@@ -29,6 +30,7 @@ export class LidarrConfigManager implements ConfigManager {
 			"string",
 			false,
 		);
+		this.libraryId = await this.api.getValue("libraryid", "string", false);
 		this.qualityProfileName = await this.api.getValue(
 			"qualityprofile",
 			"string",
@@ -75,6 +77,10 @@ export class LidarrConfigManager implements ConfigManager {
 
 	getRootFolderPath() {
 		return this.rootFolderPath;
+	}
+
+	getLibraryId() {
+		return this.libraryId;
 	}
 
 	getQualityProfileName() {
@@ -131,6 +137,13 @@ export class LidarrConfigManager implements ConfigManager {
 							placeholder: "/media/Music",
 							value: this.rootFolderPath ?? "",
 							name: "Root Folder Path",
+						},
+						{
+							type: "text",
+							id: "libraryId",
+							placeholder: "local-library",
+							value: this.libraryId ?? "",
+							name: "Local Library ID",
 						},
 						{
 							type: "text",
@@ -192,6 +205,7 @@ export class LidarrConfigManager implements ConfigManager {
 			publicUrl,
 			apiKey,
 			rootFolderPath,
+			libraryId,
 			qualityProfileName,
 			metadataProfileName,
 			webhookPort,
@@ -234,6 +248,16 @@ export class LidarrConfigManager implements ConfigManager {
 			} else {
 				this.rootFolderPath = null;
 				await this.api.delete("rootfolder");
+			}
+		}
+
+		if (typeof libraryId == "string") {
+			if (libraryId.trim()) {
+				this.libraryId = libraryId;
+				await this.api.setValue("libraryid", "string", libraryId);
+			} else {
+				this.libraryId = null;
+				await this.api.delete("libraryid");
 			}
 		}
 
